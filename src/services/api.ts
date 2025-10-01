@@ -26,3 +26,15 @@ export const getTransactions = async (userId: string) => {
   const res = await axios.get(`${API_URL}/${userId}/transactions`);
   return res.data;
 };
+export const payWithCard = async (payload: {
+  userId: string;
+  amount: number;
+  cardNumber: string;
+  expiry: string;
+  cvv: string;
+  cardHolder: string;
+  description?: string;
+}) => {
+  const res = await axios.post(`${API_URL}/pay`, payload);
+  return res.data;
+};

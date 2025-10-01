@@ -101,5 +101,108 @@ router.get('/', (req, res) => {
   }));
   res.json(safeUsers);
 });
+// Ajoute en haut du fichier si nécessaire (déjà présents dans ton fichier actuel)
+// import { Router } from 'express';
+// import { v4 as uuidv4 } from 'uuid';
+// ...
+// const router = Router();
+// const users: User[] = [];
+
+function luhnCheck(cardNumber: string): boolean {
+  // Luhn algorithm (simple validation)
+  const sanitized = cardNumber.replace(/\s+/g, '');
+  let sum = 0;
+  let shouldDouble = false;
+  for (let i = sanitized.length - 1; i >= 0; i--) {
+    let digit = parseInt(sanitized.charAt(i), 10);
+    if (shouldDouble) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+    shouldDouble = !shouldDouble;
+  }
+  return sum % 10 === 0;
+}
+
+function maskCard(cardNumber: string) {
+  const sanitized = cardNumber.replace(/\s+/g, '');
+  if (sanitized.length <= 4) return sanitized;
+  const last4 = sanitized.slice(-4);
+  return '**** **** **** ' + last4;
+}
+
+// Endpoint : paiement par carte (simulé)
+router.post('/pay', (req, res) => {
+  const {
+    userId,
+    amount,
+    cardNumber,
+    expiry,   // ex: "12/26"
+    cvv,      // on n'enregistrera pas le cvv
+    cardHolder,
+    description
+  } = req.body;
+
+  // validations basiques
+  if (!userId || !amount || !cardNumber || !expiry || !cvv || !cardHolder) {
+    return res.status(400).json({ message: 'Champs manquants pour le paiement' });
+  }
+
+  if (typeof amount !== 'number' || amount <= 0) {
+    return res.status(400).json({ message: 'Montant invalide' });
+  }
+
+  // Vérifier carte (Luhn)
+  if (!luhnCheck(cardNumber)) {
+    return res.status(400).json({ message: 'Numéro de carte invalide' });
+  }
+
+  // Optionnel : vérifier la date d'expiration simple (MM/YY)
+  const match = /^(\d{2})\/(\d{2})$/.exec(expiry);
+  if (!match) {
+    return res.status(400).json({ message: 'Date d\'expiration invalide (format MM/YY)' });
+  }
+  const mm = parseInt(match[1], 10);
+  const yy = parseInt(match[2], 10);
+  if (mm < 1 || mm > 12) {
+    return res.status(400).json({ message: 'Mois d\'expiration invalide' });
+  }
+  // comparaison simple année/mois (assume 2000+)
+  const now = new Date();
+  const expiryDate = new Date(2000 + yy, mm - 1, 1);
+  const expiryEnd = new Date(expiryDate.getFullYear(), expiryDate.getMonth() + 1, 0); // dernier jour du mois
+  if (expiryEnd < now) {
+    return res.status(400).json({ message: 'Carte expirée' });
+  }
+
+  const user = users.find(u => u.id === userId);
+  if (!user) return res.status(404).json({ message: 'Utilisateur introuvable' });
+
+  if (user.balance < amount) return res.status(400).json({ message: 'Solde insuffisant' });
+
+  // Simuler paiement : débiter le compte
+  user.balance -= amount;
+
+  const nowDate = new Date();
+  const tx: Transaction = {
+    id: uuidv4(),
+    type: 'debit',
+    amount,
+    date: nowDate,
+    description: description || `Paiement CB ${maskCard(cardNumber)}`
+  };
+
+  user.transactions.push(tx);
+
+  // Note : on NE stocke PAS le CVV et on n'enregistre que la carte masquée si besoin
+  // Réponse : transaction et solde
+  res.json({
+    message: 'Paiement accepté (simulé)',
+    transaction: tx,
+    balance: user.balance,
+    card: maskCard(cardNumber) // uniquement pour affichage
+  });
+});
 
 export default router;

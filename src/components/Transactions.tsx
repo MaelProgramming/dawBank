@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getTransactions } from '../services/api';
 
-interface Props {
-  userId: string;
-}
-
+interface Props { userId: string }
 interface Transaction {
   id: string;
   type: 'credit' | 'debit';
@@ -21,15 +18,28 @@ const Transactions: React.FC<Props> = ({ userId }) => {
   }, [userId]);
 
   return (
-    <div>
+    <div className="transaction-table">
       <h2>Historique des transactions</h2>
-      <ul>
-        {transactions.map(t => (
-          <li key={t.id}>
-            [{t.type}] {t.amount} € - {t.description} ({new Date(t.date).toLocaleString()})
-          </li>
-        ))}
-      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Montant</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map(t => (
+            <tr key={t.id}>
+              <td>{new Date(t.date).toLocaleString()}</td>
+              <td>{t.type}</td>
+              <td>{t.amount} €</td>
+              <td>{t.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

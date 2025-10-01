@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getUsers } from '../services/api';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  balance: number;
-}
+interface User { id: string; name: string; email: string; balance: number }
 
 const UserList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -16,7 +11,7 @@ const UserList: React.FC = () => {
   }, []);
 
   return (
-    <div>
+    <div className="user-list">
       <h2>Liste des utilisateurs</h2>
       <ul>
         {users.map(u => (
