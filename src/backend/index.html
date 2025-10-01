@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Backend Logs</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        pre { background: #f0f0f0; padding: 10px; }
+        button { margin: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Backend Users</h1>
+    <button id="loadUsers">Charger les utilisateurs</button>
+    <pre id="output">Clique sur le bouton pour afficher les utilisateurs...</pre>
+
+    <script>
+        const output = document.getElementById('output');
+        const btn = document.getElementById('loadUsers');
+
+        btn.addEventListener('click', async () => {
+            try {
+                const res = await fetch('http://localhost:5000/api/users');
+                if (!res.ok) throw new Error('Erreur serveur');
+                const data = await res.json();
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                output.textContent = 'Erreur : ' + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
